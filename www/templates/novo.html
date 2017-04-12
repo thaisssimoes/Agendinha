@@ -1,0 +1,15 @@
+<ion-view view-title="Nova Tarefa">
+  <ion-content ng-controller="NovoControle">
+    <ion-list>
+      <label class="item item-input item-stacked-label">
+        <span class="input-label">Tarefa</span>
+        <input type="text" ng-model="tarefa.texto" placeholder="Digite sua tarefa aqui">
+        <!-- ng-model dá um nove a variavel que ficará disponivel nos controllers. -->
+      </label>
+    </ion-list>
+    <div class="padding">
+      <button class="button button-block button-positive" ng-click="salvar()">Salvar</button>
+      <button class="button button-block button-assertive" ng-click="cancelar()">Cancelar</button>
+    </div>
+  </ion-content>
+</ion-view>
