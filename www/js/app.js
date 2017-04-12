@@ -15,12 +15,15 @@ app.config(function($stateProvider, $urlRouterProvider){
 
   $stateProvider.state("novo", {
     url:"/novo",
-    templateUrl: "templates/novo.html"
+    templateUrl: "templates/novo.html",
+    controller : "NovoControle"
+
   });
   //os dois pontos indice é dado para indicar substituição na barra de tarefas. Passa um indice.
   $stateProvider.state("editar", {
     url:"/editar:indice",
-    templateUrl: "templates/novo.html"
+    templateUrl: "templates/novo.html",
+    controller: "EditCtrl"
   });
   $urlRouterProvider.otherwise("/lista");
 
@@ -53,18 +56,18 @@ app.run(function($ionicPlatform) {
 
 
 
-var tarefas =[]; //descobrir como tirar isso depois
 
 // controler é o responsável por ter os métodos utilizados nas views - O scope permite que haja troca de info automatica entre a view e o controller
-app.controller("ListaCtrl", function($scope, $state){
-  $scope.tarefas =tarefas;
+app.controller("ListaCtrl", function($scope, $state, TarefaService){
+
+  $scope.tarefas = TarefaService.lista();
 
   $scope.concluir = function(indice){
-    $scope.tarefas[indice].feita=true;
+    TarefaService.concluir(indice);
   };
 
   $scope.apagar = function(indice){
-    $scope.tarefas.splice(indice, 1); //ele apaga um elemento do json
+    TarefaService.apagar(indice);
   };
 
   $scope.editar = function(indice){
@@ -74,7 +77,7 @@ app.controller("ListaCtrl", function($scope, $state){
 });
 
 
-app.controller("NovoControle", function($scope, $state){
+app.controller("NovoControle", function($scope, $state, TarefaService){
 
       $scope.tarefa= {
         "texto":'',
@@ -84,7 +87,7 @@ app.controller("NovoControle", function($scope, $state){
 
 
   $scope.salvar = function(){
-    tarefas.push($scope.tarefa);
+    TarefaService.inserir($scope.tarefa);
     $state.go("lista");
   }
 
@@ -94,7 +97,61 @@ app.controller("NovoControle", function($scope, $state){
   }
 });
 
-app.controller("EditCtrl", function($scope, $state, $stateParams){
+app.controller("EditCtrl", function($scope, $state, $stateParams, TarefaService){
 
   $scope.indice= $stateParams.indice;
+  //o angular copy é usado abaixo para evitar que as alterções, mesmo que não salvas, sejam de fato efetuadas.
+  //Passagem por referencia (sem o copy) x Passagem por valor (com Copy)
+  $scope.tarefa= angular.copy(TarefaService.obtem($scope.indice));
+  //Por ele ter feito uma cópia do valor e atribuido à variável. Ela só será modificada após apertarem no botão salvar.
+  $scope.salvar = function(){
+    TarefaService.alterar($scope.indice, $scope.tarefa);
+    $state.go("lista");
+  };
+
+  $scope.cancelar = function(){
+    $state.go("lista");
+
+  };
+});
+
+
+
+
+//SERVIÇOS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+app.factory("TarefaService", function(){
+
+  //Transforma string em JSON ou vetor JSON vazio
+  var tarefas = JSON.parse(window.localStorage.getItem("db_tarefas") || "[]");
+
+  //Transforma JSON em string
+  function persistencia(){
+    window.localStorage.setItem("db_tarefas", JSON.stringify(tarefas));
+  }
+  return{
+    lista: function(){
+      return tarefas;
+    },
+    obtem: function(indice){
+      return tarefas[indice];
+    },
+    inserir: function(tarefa){
+      tarefas.push(tarefa);
+      persistencia();
+    },
+    alterar: function(indice, tarefa){
+      tarefas[indice] = tarefa;
+      persistencia();
+    },
+    concluir: function(indice){
+      tarefas[indice].feita = true;
+      persistencia();
+
+    },
+    apagar: function(indice){
+      tarefas.splice(indice, 1);
+      persistencia();
+    }
+  }
 });
